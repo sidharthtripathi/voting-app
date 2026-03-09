@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Poll {
+  id                 String       @id @default(cuid())
+  title              String
+  description        String?
+  controlToken       String       @unique
+  createdAt          DateTime     @default(now())
+  expiresAt          DateTime?
+  closed             Boolean      @default(false)
+  suggestionsEnabled Boolean      @default(false)
+  
+  options            Option[]
+  votes              Vote[]
+  suggestions        Suggestion[]
+  
+  @@index([id])
+  @@index([controlToken])
+}
+
+model Option {
+  id        String   @id @default(cuid())
+  pollId    String
+  text      String
+  voteCount Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes     Vote[]
+  
+  @@index([pollId])
+}
+
+model Vote {
+  id          String   @id @default(cuid())
+  pollId      String
+  optionId    String
+  anonymousId String
+  createdAt   DateTime @default(now())
+  
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option Option @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  
+  @@unique([pollId, anonymousId])
+  @@index([pollId])
+  @@index([anonymousId])
+}
+
+model Suggestion {
+  id        String   @id @default(cuid())
+  pollId    String
+  text      String
+  createdAt DateTime @default(now())
+  
+  poll Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  
+  @@index([pollId])
+}

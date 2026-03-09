@@ -10,12 +10,16 @@
 !.yarn/releases
 !.yarn/versions
 
+/.kiro
+
 # testing
 /coverage
 
 # next.js
 /.next/
 /out/
+
+SETUP.md
 
 # production
 /build
@@ -39,3 +43,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
