@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 import { getPusherClient, getPollChannelName, PUSHER_EVENTS } from "@/lib/pusher";
 import { formatTimeRemaining } from "@/lib/utils";
 import type { Poll, Option, Suggestion, VoteUpdateEvent } from "@/types";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import {
     ExternalLink,
     Pencil,
@@ -17,7 +20,6 @@ import {
     X,
     Loader2,
     AlertTriangle,
-    Lock,
     CheckCircle2,
     Clock,
 } from "lucide-react";
@@ -174,6 +176,25 @@ export default function AdminPage({ params }: { params: Promise<{ pollId: string
         } finally {
             setEditingOption(null);
             setEditOptionText("");
+        }
+    };
+
+    const handleToggleSuggestions = async (enabled: boolean) => {
+        if (!controlToken) return;
+        try {
+            const response = await fetch(`/api/polls/${pollId}/admin`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ controlToken, suggestionsEnabled: enabled }),
+            });
+            if (response.ok) {
+                setPoll((prev) => prev && { ...prev, suggestionsEnabled: enabled });
+            } else {
+                alert("Failed to update suggestions setting");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Network error");
         }
     };
 
@@ -345,18 +366,22 @@ export default function AdminPage({ params }: { params: Promise<{ pollId: string
                                     )}
                                 </CardTitle>
                                 <CardDescription>
-                                    {poll.suggestionsEnabled
-                                        ? "Pending option suggestions from voters."
-                                        : "Suggestions are disabled for this poll."}
+                                    Allow voters to suggest new options for this poll.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                {!poll.suggestionsEnabled ? (
-                                    <div className="text-center py-6 text-muted-foreground">
-                                        <Lock className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                                        <p className="text-sm">Disabled</p>
-                                    </div>
-                                ) : suggestions.length === 0 ? (
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+                                    <Label htmlFor="suggestions-toggle" className="text-sm font-medium cursor-pointer">
+                                        {poll.suggestionsEnabled ? "Suggestions enabled" : "Suggestions disabled"}
+                                    </Label>
+                                    <Switch
+                                        id="suggestions-toggle"
+                                        checked={poll.suggestionsEnabled}
+                                        onCheckedChange={handleToggleSuggestions}
+                                    />
+                                </div>
+
+                                {suggestions.length === 0 ? (
                                     <div className="text-center py-6 text-muted-foreground">
                                         <CheckCircle2 className="w-10 h-10 mx-auto mb-3 opacity-40" />
                                         <p className="text-sm">No pending suggestions</p>
@@ -372,8 +397,8 @@ export default function AdminPage({ params }: { params: Promise<{ pollId: string
                                                 <div className="flex gap-2">
                                                     <Button
                                                         size="sm"
-                                                        variant="outline"
-                                                        className="flex-1 text-green-600 border-green-600/30 hover:bg-green-50"
+                                                        variant="secondary"
+                                                        className="flex-1"
                                                         onClick={() => handleSuggestionAction(suggestion.id, "approve")}
                                                     >
                                                         <Check className="w-3.5 h-3.5 mr-1" />
@@ -381,8 +406,8 @@ export default function AdminPage({ params }: { params: Promise<{ pollId: string
                                                     </Button>
                                                     <Button
                                                         size="sm"
-                                                        variant="outline"
-                                                        className="flex-1 text-destructive border-destructive/30 hover:bg-red-50"
+                                                        variant="destructive"
+                                                        className="flex-1"
                                                         onClick={() => handleSuggestionAction(suggestion.id, "reject")}
                                                     >
                                                         <X className="w-3.5 h-3.5 mr-1" />
@@ -402,9 +427,9 @@ export default function AdminPage({ params }: { params: Promise<{ pollId: string
                                     href={`/p/${poll.id}`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="w-full inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                                    className={cn(buttonVariants({ variant: "outline" }), "w-full gap-2")}
                                 >
-                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    <ExternalLink className="w-4 h-4" />
                                     View Live Poll
                                 </a>
                             </CardFooter>

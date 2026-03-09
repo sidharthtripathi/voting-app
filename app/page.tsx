@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import fpPromise from "@fingerprintjs/fingerprintjs";
+import { useState, useEffect } from "react";
 import { parseOptions } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Share2, FileText, Settings, Loader2, PlusCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const [input, setInput] = useState("");
@@ -17,29 +17,13 @@ export default function Home() {
     options: string[];
     expiresIn?: string;
   } | null>(null);
+  const [suggestionsEnabled, setSuggestionsEnabled] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createdPoll, setCreatedPoll] = useState<{
     pollId: string;
     controlToken: string;
     adminUrl: string;
   } | null>(null);
-  const [fingerprint, setFingerprint] = useState<string | null>(null);
-
-  // Initialize FingerprintJS
-  useEffect(() => {
-    const initFingerprint = async () => {
-      try {
-        const fp = await fpPromise.load();
-        const result = await fp.get();
-        setFingerprint(result.visitorId);
-      } catch (error) {
-        console.error("Failed to load FingerprintJS:", error);
-      }
-    };
-
-    initFingerprint();
-  }, []);
-
   // Parse input on change
   useEffect(() => {
     if (input.trim()) {
@@ -63,7 +47,7 @@ export default function Home() {
         body: JSON.stringify({
           title: input.split(":")[0]?.trim() || "Untitled Poll",
           options: input,
-          suggestionsEnabled: false,
+          suggestionsEnabled,
           expiresIn: parsedResult.expiresIn,
         }),
       });
@@ -116,7 +100,7 @@ export default function Home() {
 
   if (createdPoll) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      <div className="flex flex-col items-center justify-center p-6 py-12">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <h1 className="text-4xl font-extrabold tracking-tight mb-2">
@@ -146,7 +130,7 @@ export default function Home() {
 
               <a
                 href={`/p/${createdPoll.pollId}`}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-secondary text-secondary-foreground px-4 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors"
+                className={cn(buttonVariants({ variant: "secondary" }), "w-full gap-2")}
               >
                 <FileText className="w-4 h-4" />
                 View Poll
@@ -154,7 +138,7 @@ export default function Home() {
 
               <a
                 href={`/admin/${createdPoll.pollId}`}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                className={cn(buttonVariants({ variant: "outline" }), "w-full gap-2")}
               >
                 <Settings className="w-4 h-4" />
                 Admin Panel
@@ -167,7 +151,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+    <div className="flex flex-col items-center justify-center p-6 py-12">
       <div className="max-w-2xl w-full">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-extrabold tracking-tight mb-4">
@@ -216,6 +200,17 @@ export default function Home() {
                 </div>
               </div>
             )}
+
+            <div className="flex items-center justify-between mb-4 rounded-lg border p-3 bg-muted/30">
+              <Label htmlFor="suggestions-switch" className="text-sm font-medium cursor-pointer">
+                Allow voters to suggest options
+              </Label>
+              <Switch
+                id="suggestions-switch"
+                checked={suggestionsEnabled}
+                onCheckedChange={setSuggestionsEnabled}
+              />
+            </div>
 
             <Button
               onClick={handleCreatePoll}

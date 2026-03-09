@@ -225,7 +225,7 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
                 {formatTimeRemaining(new Date(poll.expiresAt))}
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-green-600">
+              <span className="flex items-center gap-1 text-primary">
                 <CheckCircle2 className="w-4 h-4" />
                 Open
               </span>
