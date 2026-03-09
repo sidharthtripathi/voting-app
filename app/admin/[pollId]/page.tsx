@@ -212,11 +212,9 @@ export default function AdminPage({ params }: { params: Promise<{ pollId: string
             );
 
             if (response.ok) {
+                // Suggestion removal is handled here; option addition (approve) is
+                // handled via the Pusher SUGGESTION_APPROVED event to avoid duplicates.
                 setSuggestions((prev) => prev.filter((s) => s.id !== suggestionId));
-                if (action === "approve") {
-                    const newOption = await response.json();
-                    setOptions((prev) => [...prev, newOption]);
-                }
             } else {
                 alert(`Failed to ${action} suggestion`);
             }
