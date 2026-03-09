@@ -47,6 +47,7 @@ export const PUSHER_EVENTS = {
   VOTE_UPDATE: 'vote-update',
   POLL_CLOSED: 'poll-closed',
   POLL_REOPENED: 'poll-reopened',
+  POLL_DELETED: 'poll-deleted',
   OPTION_EDITED: 'option-edited',
   SUGGESTION_CREATED: 'suggestion-created',
   SUGGESTION_APPROVED: 'suggestion-approved',

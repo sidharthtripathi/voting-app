@@ -5,7 +5,7 @@ import fpPromise from "@fingerprintjs/fingerprintjs";
 import { getPusherClient, getPollChannelName, PUSHER_EVENTS } from "@/lib/pusher";
 import { formatTimeRemaining } from "@/lib/utils";
 import type { Poll, Option, Suggestion, VoteUpdateEvent } from "@/types";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -33,6 +33,7 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
   const [suggestionText, setSuggestionText] = useState("");
   const [submittingSuggestion, setSubmittingSuggestion] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   // Initialize FingerprintJS
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
           setSuggestions(data.suggestions);
           setHasVoted(data.hasVoted);
         } else {
-          console.error("Failed to fetch poll data:", await response.json());
+          setNotFound(true);
         }
       } catch (error) {
         console.error("Error fetching poll data:", error);
@@ -95,6 +96,12 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
 
     channel.bind(PUSHER_EVENTS.POLL_REOPENED, () => {
       setPoll((prev) => prev && { ...prev, closed: false });
+    });
+
+    channel.bind(PUSHER_EVENTS.POLL_DELETED, () => {
+      setNotFound(true);
+      setPoll(null);
+      pusher.unsubscribe(channelName);
     });
 
     channel.bind(PUSHER_EVENTS.SUGGESTION_CREATED, (data: { suggestion: Suggestion }) => {
@@ -157,7 +164,7 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
 
     setSubmittingSuggestion(true);
     try {
-      const response = await fetch(`/api/polls/${pollId}/suggest`, {
+      const response = await fetch(`/api/polls/${pollId}/suggestions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -198,9 +205,19 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
     }
   };
 
+  if (notFound) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center px-6">
+        <h1 className="text-2xl font-bold mb-2">Poll not found</h1>
+        <p className="text-muted-foreground mb-6">This poll may have been deleted or does not exist.</p>
+        <a href="/" className={buttonVariants({ variant: "default" })}>Go Home</a>
+      </div>
+    );
+  }
+
   if (!poll) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );

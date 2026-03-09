@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getPusherServer, getPollChannelName, PUSHER_EVENTS } from '@/lib/pusher';
 import type { AdminActionRequest, ErrorResponse } from '@/types';
 
 /**
@@ -110,6 +111,10 @@ export async function DELETE(
         { status: 401 }
       );
     }
+
+    // Notify clients before deletion so they can unsubscribe
+    const pusher = getPusherServer();
+    await pusher.trigger(getPollChannelName(pollId), PUSHER_EVENTS.POLL_DELETED, { pollId });
 
     // Delete poll (cascade deletes options, votes, suggestions via Prisma schema)
     await prisma.poll.delete({
