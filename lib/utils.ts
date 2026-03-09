@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { prisma } from './prisma';
+
 
 /**
  * Parse natural language option input into an array of option strings
@@ -43,10 +43,10 @@ export function generateControlToken(): string {
 /**
  * Calculate expiration timestamp from duration string (e.g., "2h", "30m")
  */
-export function calculateExpirationTime(expiresIn: string): Date {
+export function calculateExpirationTime(expiresIn: string): Date | null {
   const match = expiresIn.match(/^(\d+)(h|m)$/i);
   if (!match) {
-    throw new Error('Invalid expiration format');
+    return null;
   }
 
   const value = parseInt(match[1], 10);
@@ -93,26 +93,4 @@ export function calculateBarWidth(
   return (voteCount / maxVoteCount) * 100;
 }
 
-/**
- * Verify that a control token matches a poll ID
- * Returns true if the token is valid for the given poll, false otherwise
- */
-export async function verifyControlToken(
-  pollId: string,
-  token: string
-): Promise<boolean> {
-  try {
-    const poll = await prisma.poll.findUnique({
-      where: {
-        id: pollId,
-        controlToken: token,
-      },
-    });
 
-    return poll !== null;
-  } catch (error) {
-    // Log error for debugging but return false for security
-    console.error('Error verifying control token:', error);
-    return false;
-  }
-}

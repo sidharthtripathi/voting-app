@@ -31,7 +31,7 @@ export async function POST(
     }
 
     // Fetch poll to validate it exists and check if it's open
-    const poll = await prisma.poll.findUnique({
+    let poll = await prisma.poll.findUnique({
       where: { id: pollId },
     });
 
@@ -45,6 +45,24 @@ export async function POST(
         },
         { status: 404 }
       );
+    }
+
+    // Auto-expire check
+    if (!poll.closed && poll.expiresAt && new Date() >= new Date(poll.expiresAt)) {
+      poll = await prisma.poll.update({
+        where: { id: pollId },
+        data: { closed: true },
+      });
+
+      try {
+        const pusher = getPusherServer();
+        await pusher.trigger(getPollChannelName(pollId), PUSHER_EVENTS.POLL_CLOSED, {
+          pollId,
+          closedAt: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.error('Failed to dispatch poll closed event details:', e);
+      }
     }
 
     // Check if poll is closed
@@ -127,7 +145,7 @@ export async function POST(
     try {
       const pusher = getPusherServer();
       const channelName = getPollChannelName(pollId);
-      
+
       await pusher.trigger(channelName, PUSHER_EVENTS.VOTE_UPDATE, {
         optionId: result.id,
         count: result.voteCount,

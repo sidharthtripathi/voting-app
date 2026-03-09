@@ -45,9 +45,8 @@ export async function POST(request: NextRequest) {
     // Calculate expiration timestamp if provided
     let expiresAt: Date | null = null;
     if (expiresIn) {
-      try {
-        expiresAt = calculateExpirationTime(expiresIn);
-      } catch (error) {
+      expiresAt = calculateExpirationTime(expiresIn);
+      if (expiresAt === null) {
         return NextResponse.json<ErrorResponse>(
           {
             error: {

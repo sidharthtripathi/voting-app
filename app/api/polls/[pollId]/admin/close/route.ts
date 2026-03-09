@@ -70,7 +70,7 @@ export async function POST(
     try {
       const pusher = getPusherServer();
       const channelName = getPollChannelName(pollId);
-      
+
       await pusher.trigger(channelName, PUSHER_EVENTS.POLL_CLOSED, {
         pollId: updatedPoll.id,
         closedAt: updatedPoll.createdAt.toISOString(),

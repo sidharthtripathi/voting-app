@@ -1,6 +1,14 @@
 import { generateControlToken, parseOptions, calculateExpirationTime, formatTimeRemaining, calculateBarWidth } from '../utils';
 import * as fc from 'fast-check';
 
+jest.mock('../prisma', () => ({
+  prisma: {
+    poll: {
+      findUnique: jest.fn(),
+    },
+  },
+}));
+
 describe('generateControlToken', () => {
   describe('Unit Tests', () => {
     it('should generate a 64-character hex string', () => {
@@ -13,7 +21,7 @@ describe('generateControlToken', () => {
       const token1 = generateControlToken();
       const token2 = generateControlToken();
       const token3 = generateControlToken();
-      
+
       expect(token1).not.toBe(token2);
       expect(token2).not.toBe(token3);
       expect(token1).not.toBe(token3);

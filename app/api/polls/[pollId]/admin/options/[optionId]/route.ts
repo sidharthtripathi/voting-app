@@ -116,7 +116,7 @@ export async function PATCH(
     try {
       const pusher = getPusherServer();
       const channelName = getPollChannelName(pollId);
-      
+
       const eventData: OptionEditedEvent = {
         optionId: updatedOption.id,
         text: updatedOption.text,

@@ -20,7 +20,7 @@ export async function GET(
       request.headers.get('x-anonymous-id');
 
     // Fetch poll with related data
-    const poll = await prisma.poll.findUnique({
+    let poll = await prisma.poll.findUnique({
       where: { id: pollId },
       include: {
         options: {
@@ -41,6 +41,29 @@ export async function GET(
         },
       };
       return NextResponse.json(errorResponse, { status: 404 });
+    }
+
+    // Auto-expire check
+    if (!poll.closed && poll.expiresAt && new Date() >= new Date(poll.expiresAt)) {
+      poll = await prisma.poll.update({
+        where: { id: pollId },
+        data: { closed: true },
+        include: {
+          options: { orderBy: { createdAt: 'asc' } },
+          suggestions: { orderBy: { createdAt: 'asc' } },
+        },
+      });
+
+      try {
+        const { getPusherServer, getPollChannelName, PUSHER_EVENTS } = await import('@/lib/pusher');
+        const pusher = getPusherServer();
+        await pusher.trigger(getPollChannelName(pollId), PUSHER_EVENTS.POLL_CLOSED, {
+          pollId,
+          closedAt: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.error('Failed to dispatch poll closed event details:', e);
+      }
     }
 
     // Check if anonymous ID has voted

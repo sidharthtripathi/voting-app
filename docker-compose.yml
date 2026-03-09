@@ -20,27 +20,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Next.js Application
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: settle-app
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://settle_user:settle_password@postgres:5432/settle_db
-      - NEXT_PUBLIC_PUSHER_KEY=${NEXT_PUBLIC_PUSHER_KEY}
-      - NEXT_PUBLIC_PUSHER_CLUSTER=${NEXT_PUBLIC_PUSHER_CLUSTER}
-      - PUSHER_APP_ID=${PUSHER_APP_ID}
-      - PUSHER_SECRET=${PUSHER_SECRET}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: sh -c "npx prisma migrate deploy && npm start"
-
 volumes:
   postgres_data:
     driver: local
