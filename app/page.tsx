@@ -3,6 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import fpPromise from "@fingerprintjs/fingerprintjs";
 import { parseOptions } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Share2, FileText, Settings, Loader2, PlusCircle } from "lucide-react";
 
 export default function Home() {
   const [input, setInput] = useState("");
@@ -109,205 +116,126 @@ export default function Home() {
 
   if (createdPoll) {
     return (
-      <div className="min-h-screen bg-black text-zinc-50 flex flex-col items-center justify-center p-6">
-        <div className="max-w-md w-full">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2 text-zinc-50">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-extrabold tracking-tight mb-2">
               Link Created
             </h1>
-            <p className="text-zinc-400">Share this poll with your friends</p>
+            <p className="text-muted-foreground">Share this poll with your friends</p>
           </div>
 
-          <div className="bg-zinc-900 rounded-2xl p-6 shadow-xl">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Poll URL
-              </label>
-              <div className="bg-black rounded-lg p-3 break-all text-sm">
-                {window.location.origin}/p/{createdPoll.pollId}
+          <Card>
+            <CardHeader>
+              <CardTitle>Poll Details</CardTitle>
+              <CardDescription>Your poll is ready to be shared.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Poll URL</Label>
+                <div className="bg-muted rounded-md p-3 break-all text-sm font-mono text-muted-foreground">
+                  {window.location.origin}/p/{createdPoll.pollId}
+                </div>
               </div>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={handleShare}
-                className="w-full bg-white text-black py-3 rounded-xl font-semibold hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-                  />
-                </svg>
-                Share
-              </button>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-3">
+              <Button onClick={handleShare} className="w-full flex items-center gap-2">
+                <Share2 className="w-4 h-4" />
+                Share Link
+              </Button>
 
               <a
                 href={`/p/${createdPoll.pollId}`}
-                className="w-full bg-zinc-800 text-zinc-50 py-3 rounded-xl font-semibold hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2 border border-zinc-700"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-secondary text-secondary-foreground px-4 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
+                <FileText className="w-4 h-4" />
                 View Poll
               </a>
 
               <a
                 href={`/admin/${createdPoll.pollId}`}
-                className="w-full bg-transparent text-yellow-500 py-3 rounded-xl font-semibold hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 border border-yellow-500/50"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
+                <Settings className="w-4 h-4" />
                 Admin Panel
               </a>
-            </div>
-          </div>
+            </CardFooter>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-zinc-50 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="max-w-2xl w-full">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-extrabold tracking-tight mb-4">
             What are we settling?
           </h1>
-          <p className="text-zinc-400 text-lg">
+          <p className="text-muted-foreground text-lg">
             Decide between options fast with a shareable link. No accounts.
           </p>
-          <p className="text-zinc-500 text-sm mt-2">
+          <p className="text-muted-foreground text-sm mt-2">
             Use ":" to name it. Use "or", commas, /, | to separate options. Add
             "closes in 2h" to auto-close.
           </p>
         </div>
 
-        <div className="bg-zinc-900 rounded-2xl p-6 shadow-xl">
-          <div className="mb-6">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="e.g., Dinner: Pizza or Thai? closes in 2h"
-              className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-lg text-zinc-50 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none h-24"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleCreatePoll();
-                }
-              }}
-            />
-          </div>
-
-          {parsedResult && (
-            <div className="mb-6 p-4 bg-zinc-800 rounded-xl">
-              <h3 className="text-sm font-semibold text-zinc-400 mb-2">
-                {parsedResult.options.length}{" "}
-                {parsedResult.options.length === 1 ? "option" : "options"}
-                {parsedResult.expiresIn &&
-                  ` - closes in ${parsedResult.expiresIn}`}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {parsedResult.options.map((option, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-zinc-700 rounded-full text-sm text-zinc-300"
-                  >
-                    {option}
-                  </span>
-                ))}
-              </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="mb-6">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="e.g., Dinner: Pizza or Thai? closes in 2h"
+                className="w-full text-lg resize-none min-h-[120px]"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleCreatePoll();
+                  }
+                }}
+              />
             </div>
-          )}
 
-          <button
-            onClick={handleCreatePoll}
-            disabled={!parsedResult || creating}
-            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-4 rounded-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
-          >
-            {creating ? (
-              <>
-                <svg
-                  className="animate-spin h-5 w-5 text-black"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Creating...
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Create Poll
-              </>
+            {parsedResult && (
+              <div className="mb-6 p-4 bg-muted rounded-xl">
+                <h3 className="text-sm font-semibold mb-3">
+                  {parsedResult.options.length}{" "}
+                  {parsedResult.options.length === 1 ? "option" : "options"}
+                  {parsedResult.expiresIn &&
+                    ` - closes in ${parsedResult.expiresIn}`}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {parsedResult.options.map((option, index) => (
+                    <Badge variant="secondary" key={index} className="text-sm py-1 px-3">
+                      {option}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             )}
-          </button>
-        </div>
+
+            <Button
+              onClick={handleCreatePoll}
+              disabled={!parsedResult || creating}
+              className="w-full h-12 text-md font-semibold"
+            >
+              {creating ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="mr-2 h-5 w-5" />
+                  Create Poll
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

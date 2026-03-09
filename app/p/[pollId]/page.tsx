@@ -1,10 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect, use } from 'react';
-import fpPromise from '@fingerprintjs/fingerprintjs';
-import { getPusherClient, getPollChannelName, PUSHER_EVENTS } from '@/lib/pusher';
-import { formatTimeRemaining, calculateBarWidth } from '@/lib/utils';
-import type { Poll, Option, Suggestion, VoteUpdateEvent } from '@/types';
+import { useState, useEffect, use } from "react";
+import fpPromise from "@fingerprintjs/fingerprintjs";
+import { getPusherClient, getPollChannelName, PUSHER_EVENTS } from "@/lib/pusher";
+import { formatTimeRemaining } from "@/lib/utils";
+import type { Poll, Option, Suggestion, VoteUpdateEvent } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Share2, Clock, CheckCircle2, Loader2, Plus, Info } from "lucide-react";
 
 interface PollDataResponse {
   poll: Poll;
@@ -26,7 +31,7 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
   const [hasVoted, setHasVoted] = useState(false);
   const [voting, setVoting] = useState(false);
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
-  const [suggestionText, setSuggestionText] = useState('');
+  const [suggestionText, setSuggestionText] = useState("");
   const [submittingSuggestion, setSubmittingSuggestion] = useState(false);
 
   // Initialize FingerprintJS
@@ -37,7 +42,7 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
         const result = await fp.get();
         setAnonymousId(result.visitorId);
       } catch (error) {
-        console.error('Failed to load FingerprintJS:', error);
+        console.error("Failed to load FingerprintJS:", error);
       }
     };
 
@@ -56,10 +61,10 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
           setSuggestions(data.suggestions);
           setHasVoted(data.hasVoted);
         } else {
-          console.error('Failed to fetch poll data:', await response.json());
+          console.error("Failed to fetch poll data:", await response.json());
         }
       } catch (error) {
-        console.error('Error fetching poll data:', error);
+        console.error("Error fetching poll data:", error);
       }
     };
 
@@ -104,10 +109,14 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
       );
     });
 
+    channel.bind(PUSHER_EVENTS.SUGGESTION_APPROVED, (data: { newOption: Option }) => {
+      setOptions((prev) => [...prev, data.newOption]);
+    });
+
     return () => {
       pusher.unsubscribe(channelName);
     };
-  }, [poll]);
+  }, [poll, pollId]);
 
   const handleVote = async (optionId: string) => {
     if (!anonymousId || voting || hasVoted || poll?.closed) return;
@@ -115,9 +124,9 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
     setVoting(true);
     try {
       const response = await fetch(`/api/polls/${pollId}/vote`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           optionId,
@@ -134,10 +143,10 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
         });
         setHasVoted(true);
       } else {
-        console.error('Failed to vote:', await response.json());
+        console.error("Failed to vote:", await response.json());
       }
     } catch (error) {
-      console.error('Error voting:', error);
+      console.error("Error voting:", error);
     } finally {
       setVoting(false);
     }
@@ -149,9 +158,9 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
     setSubmittingSuggestion(true);
     try {
       const response = await fetch(`/api/polls/${pollId}/suggest`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           text: suggestionText.trim(),
@@ -160,12 +169,12 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
       });
 
       if (response.ok) {
-        setSuggestionText('');
+        setSuggestionText("");
       } else {
-        console.error('Failed to submit suggestion:', await response.json());
+        console.error("Failed to submit suggestion:", await response.json());
       }
     } catch (error) {
-      console.error('Error submitting suggestion:', error);
+      console.error("Error submitting suggestion:", error);
     } finally {
       setSubmittingSuggestion(false);
     }
@@ -176,137 +185,137 @@ export default function PollPage({ params }: { params: Promise<{ pollId: string 
     try {
       if (navigator.share) {
         await navigator.share({
-          title: poll?.title || 'Settle It Poll',
-          text: 'Vote on this poll',
+          title: poll?.title || "Settle It Poll",
+          text: "Vote on this poll",
           url: shareUrl,
         });
       } else {
         await navigator.clipboard.writeText(shareUrl);
-        alert('Link copied to clipboard');
+        alert("Link copied to clipboard");
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error("Error sharing:", error);
     }
   };
 
   if (!poll) {
     return (
-      <div className="min-h-screen bg-black text-zinc-50 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 text-yellow-500 border-2 border-yellow-500 border-t-transparent rounded-full"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   const totalVotes = options.reduce((sum, option) => sum + option.voteCount, 0);
-  const maxVotes = Math.max(...options.map((option) => option.voteCount), 0);
 
   return (
-    <div className="min-h-screen bg-black text-zinc-50 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex flex-col items-center py-12 px-4 sm:px-6">
       <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2 text-zinc-50">{poll.title}</h1>
-          {poll.expiresAt && (
-            <p className="text-zinc-400 text-sm">
-              {formatTimeRemaining(new Date(poll.expiresAt))}
-            </p>
-          )}
+          <h1 className="text-4xl font-extrabold tracking-tight mb-2">{poll.title}</h1>
+          <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+            {poll.closed ? (
+              <span className="flex items-center gap-1 text-destructive">
+                <Info className="w-4 h-4" />
+                Poll Closed
+              </span>
+            ) : poll.expiresAt ? (
+              <span className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {formatTimeRemaining(new Date(poll.expiresAt))}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-green-600">
+                <CheckCircle2 className="w-4 h-4" />
+                Open
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="bg-zinc-900 rounded-2xl p-6 shadow-xl">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-zinc-50">Options</h2>
-            <div className="space-y-4">
-              {options.map((option) => {
-                const barWidth = calculateBarWidth(option.voteCount, maxVotes);
-                const percentage = totalVotes > 0 ? Math.round((option.voteCount / totalVotes) * 100) : 0;
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Options</CardTitle>
+            <CardDescription>{totalVotes} votes total</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {options.map((option) => {
+              const percentage = totalVotes > 0 ? ((option.voteCount / totalVotes) * 100) : 0;
 
-                return (
-                  <div
-                    key={option.id}
-                    className="bg-black rounded-xl p-4 border border-zinc-800 hover:border-zinc-700 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-lg font-medium text-zinc-50">{option.text}</span>
-                      <span className="text-zinc-400 text-sm">{option.voteCount} votes</span>
-                    </div>
-
-                    {hasVoted && (
-                      <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-yellow-500 to-orange-500 h-full transition-all duration-500"
-                          style={{ width: `${barWidth}%` }}
-                        ></div>
-                      </div>
-                    )}
-
-                    {!hasVoted && !poll.closed && (
-                      <button
-                        onClick={() => handleVote(option.id)}
-                        disabled={voting}
-                        className="mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-50 py-2 px-4 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                      >
-                        Vote
-                      </button>
-                    )}
+              return (
+                <div
+                  key={option.id}
+                  className="rounded-xl border p-4 bg-card text-card-foreground shadow-sm transition-all"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-medium">{option.text}</span>
+                    <span className="text-muted-foreground text-sm font-medium">{option.voteCount} votes</span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {poll.suggestionsEnabled && !poll.closed && (
-            <div className="mb-6 p-4 bg-zinc-800 rounded-xl">
-              <h3 className="text-sm font-semibold text-zinc-400 mb-2">
-                Suggest an option
-              </h3>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={suggestionText}
-                  onChange={(e) => setSuggestionText(e.target.value)}
-                  placeholder="Your suggestion..."
-                  className="flex-1 bg-black border border-zinc-700 rounded-lg p-2 text-sm text-zinc-50 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSuggestion();
-                    }
-                  }}
-                />
-                <button
-                  onClick={handleSuggestion}
-                  disabled={!suggestionText.trim() || submittingSuggestion}
-                  className="bg-zinc-700 hover:bg-zinc-600 text-zinc-50 py-2 px-4 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="border-t border-zinc-800 pt-6">
-            <div className="space-y-3">
-              <button
-                onClick={handleShare}
-                className="w-full bg-white text-black py-3 rounded-xl font-semibold hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+                  {hasVoted ? (
+                    <div className="space-y-1">
+                      <Progress value={percentage} className="h-2" />
+                      <div className="text-right text-xs text-muted-foreground">
+                        {Math.round(percentage)}%
+                      </div>
+                    </div>
+                  ) : !poll.closed ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => handleVote(option.id)}
+                      disabled={voting}
+                      className="w-full mt-2"
+                    >
+                      {voting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Vote"}
+                    </Button>
+                  ) : null}
+                </div>
+              );
+            })}
+          </CardContent>
+          <CardFooter className="flex-col gap-4">
+            {poll.suggestionsEnabled && !poll.closed && (
+              <div className="w-full bg-muted/50 p-4 rounded-xl border border-border">
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Suggest an option
+                </h3>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={suggestionText}
+                    onChange={(e) => setSuggestionText(e.target.value)}
+                    placeholder="Your suggestion..."
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSuggestion();
+                      }
+                    }}
                   />
-                </svg>
-                Share
-              </button>
+                  <Button
+                    onClick={handleSuggestion}
+                    disabled={!suggestionText.trim() || submittingSuggestion}
+                    variant="secondary"
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="w-full pt-2">
+              <Button
+                variant="default"
+                onClick={handleShare}
+                className="w-full flex items-center gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                Share Poll
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
